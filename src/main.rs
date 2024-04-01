@@ -1,20 +1,24 @@
-use std::path::PathBuf;
-use structopt::StructOpt;
-use tasks::{add_task, Task};
-use cli::Action;
 
-use crate::tasks::{complete_task, get_list};
+use structopt::StructOpt;
+use cli::Action;
+use tasks::{complete_task, get_list,add_task, Task};
+use utils::set_default_route;
+use anyhow::anyhow;
 mod tasks;
 mod cli;
+mod utils;
 
 
 
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let comands = cli::CommandLineArgs::from_args();
-    //temporary default route 
-    let default_route:PathBuf = PathBuf::from("data.json");
-    let route = comands.route_file.unwrap_or(default_route);
+
+    let route = comands.route_file
+        //case None from comands.route_file (default)
+        .or_else(set_default_route)
+        //case None from set_default_route
+        .ok_or(anyhow!("Failed To find Journal File"))?;
     
     match  comands.action{
          Action::Add{task} => add_task(route, Task::new(task)),
@@ -23,7 +27,6 @@ fn main() {
 
          Action::Done { position } => complete_task(route, position)
 
-    }
-    //temporally error management
-    .expect("faile to peformace");
+    }?;
+    return Ok(())
 }
