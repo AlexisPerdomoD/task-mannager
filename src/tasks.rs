@@ -1,7 +1,5 @@
-use std::{fs::{File, OpenOptions}, io::{self, Error, Seek, SeekFrom}, path::PathBuf};
-
-use alloc::task;
-use chrono::{DateTime, Utc, serde::ts_seconds};
+use std::{fmt, fs::{File, OpenOptions}, io::{self, Error, Seek, SeekFrom}, path::PathBuf};
+use chrono::{serde::ts_seconds, DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -13,6 +11,12 @@ pub struct Task{
 impl Task {
     pub fn new(text:String) -> Task{
         return Task { text, created_at: Utc::now()}
+    }
+}
+impl fmt::Display for Task {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let created_at = self.created_at.with_timezone(&Local).format("%F %H:%M");
+        write!(f, "{:<50} [{}]", self.text, created_at)
     }
 }
 
@@ -82,7 +86,7 @@ pub fn get_list(route_file:PathBuf) -> io::Result<()>{
     }else{
         let mut order: u32 = 1;
         for task in tasks {
-            println!("{}: {:?}", order, task);
+            println!("{}: {}", order, task);
             order += 1;
         }
     };
